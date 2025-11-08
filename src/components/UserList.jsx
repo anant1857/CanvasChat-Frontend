@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { getSocket } from '../utils/socket.jsx';
 
 export default function UserList() {
+    
   const [activeUsers, setActiveUsers] = useState([]);
 
   useEffect(() => {
