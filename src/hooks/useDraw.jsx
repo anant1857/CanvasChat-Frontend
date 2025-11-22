@@ -7,6 +7,27 @@ export const useDraw = (onDraw) => {
 
   const onMouseDown = () => setIsDrawing(true);
 
+  const getCoordinates = (e, canvas) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    let clientX, clientY;
+
+    if (e.touches && e.touches[0]) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -16,11 +37,7 @@ export const useDraw = (onDraw) => {
 
     const handleMouseMove = (e) => {
       if (!isDrawing) return;
-      const rect = canvas.getBoundingClientRect();
-      const currentPoint = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
+      const currentPoint = getCoordinates(e, canvas);
       onDraw({ prevPoint: prevPointRef.current, currentPoint, ctx });
       prevPointRef.current = currentPoint;
     };
@@ -33,28 +50,29 @@ export const useDraw = (onDraw) => {
     const handleTouchMove = (e) => {
       if (!isDrawing) return;
       e.preventDefault();
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const currentPoint = {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top,
-      };
+      const currentPoint = getCoordinates(e, canvas);
       onDraw({ prevPoint: prevPointRef.current, currentPoint, ctx });
       prevPointRef.current = currentPoint;
+    };
+
+    const handleTouchEnd = (e) => {
+      e.preventDefault();
+      setIsDrawing(false);
+      prevPointRef.current = null;
     };
 
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
     canvas.addEventListener('mouseleave', handleMouseUp);
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchend', handleMouseUp);
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
     return () => {
       canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('mouseup', handleMouseUp);
       canvas.removeEventListener('mouseleave', handleMouseUp);
       canvas.removeEventListener('touchmove', handleTouchMove);
-      canvas.removeEventListener('touchend', handleMouseUp);
+      canvas.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isDrawing, onDraw]);
 

@@ -57,6 +57,18 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       localStorage.removeItem('user');
+      
+      // Clear chat messages from localStorage
+      localStorage.removeItem('chatMessages');
+      
+      // Clear cached messages
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('messages-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
       delete axios.defaults.headers.common['Authorization'];
     }
   };
